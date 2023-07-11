@@ -17,6 +17,13 @@ function Index ({ breads }) {
         <ul>
             {breadDisplay}
         </ul>
+        <div>
+            <a href="/breads/new">
+                <button>
+                    Add a new Bread
+                </button>
+            </a>
+        </div>
       </Default>
     )
 }
