@@ -1,17 +1,20 @@
 const router = require('express').Router()
 const Bread = require('../models/bread')
+const Baker = require('../models/baker')
 
 router.get('/', async (req, res) => {
     const breads = await Bread.find()
-    res.render('index', { breads })
+    const bakers = await Baker.find()
+    res.render('index', { breads, bakers })
 })
-router.get('/new', (req, res) => {
-    res.render('new')
+router.get('/new', async (req, res) => {
+    const bakers = await Baker.find()
+    res.render('new', { bakers })
 })
-//get bread by index
+//get bread by id
 router.get('/:id', async (req, res) => {
     const { id } = req.params
-    const bread = await Bread.findById(id)
+    const bread = await Bread.findById(id).populate('baker')
     res.render('show', {
         bread 
     })
@@ -32,31 +35,33 @@ router.post('/', async (req, res) => {
     res.status(303).redirect('/breads')
 })
 // GET edit page
-router.get('/:index/edit', (req, res) => {
-    const { index } = req.params
+router.get('/:id/edit', async (req, res) => {
+    const { id } = req.params
+    const bread = await Bread.findById(id)
+    const bakers = await Baker.find()
     res.render('edit', {
-        bread: Bread[index],
-        index
+        bread,
+        bakers
     })
 })
-//PUT UPDATE by index
-router.put('/:index', (req, res) => {
-    const { index } = req.params
-    if (req.body.hasGluten === 'on'){
+// PUT update a bread by id
+router.put('/:id', async (req, res) => {
+    const { id } = req.params
+    if (req.body.hasGluten === 'on') {
         req.body.hasGluten = true
     } else {
         req.body.hasGluten = false
     }
-    if(!req.body.image){
-        req.body.image = 'https://images.unsplash.com/photo-1534620808146-d33bb39128b2?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80'
-    }
-    Bread[index] = req.body
-    res.status(303).redirect(`/breads/${index}`)
+
+    if (!req.body.image) req.body.image = 'https://images.unsplash.com/photo-1534620808146-d33bb39128b2?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80'
+
+    await Bread.findByIdAndUpdate(id, req.body)
+    res.status(303).redirect(`/breads/${id}`)
 })
 //DELETE by index
-router.delete('/:index', (req,res) => {
-    const { index } = req.params
-    Bread.splice(index, 1)
+router.delete('/:id', async (req,res) => {
+    const { id } = req.params
+    await Bread.findByIdAndDelete(id)
     res.status(303).redirect('/breads')
 })
 
